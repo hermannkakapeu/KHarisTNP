@@ -4,6 +4,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font
 import os
 import re
+from datetime import datetime
 
 
 def df_journaux(jSOCIETE):
@@ -643,7 +644,7 @@ def mettre_en_gras_les_G(fichier_excel, feuilles=None):
     wb.save(fichier_excel)
 
 
-def pipeline(chemin_df, dftiers, dfjournaux, dfIFRS, pnl, societe, mois, version):
+def pipeline(chemin_df, dftiers, dfjournaux, dfIFRS, pnl, societe, mois, version, DS="datas/Enregistrements"):
     # Lire le fichier d'entrée
     df = pd.read_excel(chemin_df, sheet_name=societe)
 
@@ -652,7 +653,7 @@ def pipeline(chemin_df, dftiers, dfjournaux, dfIFRS, pnl, societe, mois, version
     dataAN = data[(data["CléUnique"] == "AN") | (data["CléUnique"] == "RAN")]  # à retourner
     data = data[(data["CléUnique"] != "AN") & (data["CléUnique"] != "RAN")]
 
-    dfX3 = convertir_sage100_en_x31(data)  # à retourner
+    dfX3 = convertir_sage100_en_x31(data, societe)  # à retourner
     df_qualite, df_excluded, df_filtered, df_tiers_excluded, df_tiers_filtered = qualifier_et_controler3(data, dfX3)  # à retourner
 
     # Nettoyage
@@ -662,10 +663,10 @@ def pipeline(chemin_df, dftiers, dfjournaux, dfIFRS, pnl, societe, mois, version
     #df_excluded = nettoyer_dataframe(df_excluded)
 
     # Préparer le chemin
-    dossier_sortie = "datas/Enregistrements"
+    dossier_sortie = DS
     os.makedirs(dossier_sortie, exist_ok=True)
-
-    fichier_sortie = os.path.join(dossier_sortie, f"Ecritures_X3_{mois}2025_V{version}.xlsx")
+    annee_actuelle = datetime.now().year
+    fichier_sortie = os.path.join(dossier_sortie, f"Ecritures_X3_{mois}{annee_actuelle}_V{version}.xlsx")
 
     # Écriture conditionnelle
     if os.path.exists(fichier_sortie):
@@ -681,5 +682,56 @@ def pipeline(chemin_df, dftiers, dfjournaux, dfIFRS, pnl, societe, mois, version
 
     mettre_en_gras_les_G(fichier_sortie, feuilles=[societe, f"{societe}_Excluded"])
 
-    return data, dataAN, dfX3, df_filtered, df_tiers_filtered, df_excluded, df_tiers_filtered, df_qualite
+    return data, dataAN, dfX3, df_filtered, df_tiers_filtered, df_excluded, df_tiers_filtered, df_qualite, fichier_sortie
+
+
+def extraire_infos_depuis_nom(fichier):
+    fichier = fichier.lower()
+    mois_mapping = {
+        "janvier": "janvier", "février": "fevrier", "fevrier":"fevrier", "mars": "mars", "avril": "avril",
+        "mai": "mai", "juin": "juin", "juillet": "juillet", "août": "aout", "aout":"aout",
+        "septembre": "septembre", "octobre": "octobre", "novembre": "novembre", "décembre": "decembre"
+    }
+
+    societe = None
+    for s in ['LCR', 'MIN', 'LOG', 'SCI', 'GC']:
+        if s.lower() in fichier:
+            societe = s
+            break
+
+    mois = None
+    for mot in mois_mapping:
+
+        if mot in fichier:
+            mois = mois_mapping[mot]
+            break
+
+    if not mois:
+        mois = datetime.now().strftime("%B").lower()
+
+    return societe, mois
+
+
+def charger_journal_pour_societe(societe):
+    jLCR = "mapping_LCR"
+    jMIN = "mapping_MINO"
+    jLOG = "mapping_LOG"
+    jSCI = "mapping_LAVION"
+    jGC = "mapping_GRP"
+    mapping = {
+        "LCR": jLCR,
+        "MIN": jMIN,
+        "LOG": jLOG,
+        "SCI": jSCI,
+        "GC": jGC
+    }
+    if societe in mapping:
+        return df_journaux(mapping[societe])
+    else:
+        raise ValueError(f"Société inconnue ou mapping journal non trouvé pour {societe}")
+
+
+
+
+
 

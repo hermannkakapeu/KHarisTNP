@@ -33,10 +33,10 @@ df_IFRS = pd.read_excel("datas\Mapping IFRS LCR.xlsx")
 pnl = pd.read_excel("datas\Mapping_PNL_Vrai.xlsb")
 
 #Lancement des tests : remplir ces variable et lancer le code
-chemin = cheminJanvier
-journal = df_journaux(jGC)
-societe = GC
-mois = 'Janvier'
+chemin = cheminFevrier
+journal = df_journaux(jLCR)
+societe = LCR
+mois = 'Fevrier'
 version = 'F1'
 
 data, dataAN, dfX3, df_filtered, df_tiers_filtered, df_excluded, df_tiers_filtered, df_qualite = pipeline(chemin, df_tiers, journal, df_IFRS, pnl, societe, mois, version)
