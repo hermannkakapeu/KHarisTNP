@@ -122,12 +122,14 @@ def split_section_analytique(df):
         'CEU': 'CEUR',
         'EUR': 'CEUR',
         'CMA': 'CMAR',
+        'MAR': 'CMAR',
         'CNE': 'CNES',
         'CSI': 'CSIT',
         'CSO': 'CSOL',
         'SGM': 'DSMG',
-        'COL': 'FCO',
-        'FAL': '???'
+        'COL': 'FCO',           
+        'FAL': 'FSB',       #à préciser par les métiers
+        'SDI': 'SDI'        #à préciser par les métiers
     }
 
     df['Axe2'] = df['Axe2'].replace(mapping)
@@ -406,6 +408,8 @@ def convertir_sage100_en_x31(df_sage100, societe='LCR'):
                             compte_general, compte_tiers, libelle, sens, montant, devise, "", "", cle]
               df_D.append(ligne_detail_ana)
               num_ordre += 1
+              if pd.isna(row["Axe1"]) & pd.notna(row["Axe2"]):
+                  print("$$$$$$$$$$$$$$$$$$ UN AXE OBLIGATOIRE EST VIDE$$$$$$$$$$$$$$$$$")
               ligne_Ana = ["A", num_ordre, "1NC", row["Axe1"], "2BU", row["Axe2"],
                             "3AG", row["Axe3"], "4RE", row["Axe4"], montant, "", "", cle]
               df_D.append(ligne_Ana)
